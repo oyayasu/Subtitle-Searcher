@@ -5,18 +5,31 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Generate Windows icon required by Tauri
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path src-tauri\icons | Out-Null
+          $iconBase64 = "AAABAAEAICAAAAAAIABqAAAAFgAAAIlQTkcNChoKAAAADUlIRFIAAAAgAAAAIAgGAAAAc3p69AAAADFJREFUeJztzjEBADAMw7CsVMIf4wqjj0zAem1/DpvLOQAAAAAAAAAAAAAAAAAAQJIsvboBqNkZYrMAAAAASUVORK5CYII="
+          [IO.File]::WriteAllBytes("src-tauri\icons\icon.ico", [Convert]::FromBase64String($iconBase64))
 
       - name: Install dependencies
         run: npm install
@@ -24,15 +37,28 @@ jobs:
       - name: Build Windows executable
         run: npm run tauri build -- --no-bundle
 
-      - name: Prepare portable folder
+      - name: Prepare portable executable
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path portable\Shows | Out-Null
-          Copy-Item src-tauri\target\release\subtitle-searcher.exe portable\Subtitle-Searcher.exe
+          New-Item -ItemType Directory -Force -Path portable | Out-Null
+          Copy-Item "src-tauri\target\release\subtitle-searcher.exe" "portable\Subtitle-Searcher.exe"
 
-      - name: Upload Windows executable
+      - name: Upload GitHub Actions artifact
         uses: actions/upload-artifact@v4
         with:
           name: Subtitle-Searcher-Windows
-          path: portable/
+          path: portable/Subtitle-Searcher.exe
           if-no-files-found: error
+
+      - name: Publish executable to GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "windows-latest"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag "portable\Subtitle-Searcher.exe" --clobber
+          } else {
+            gh release create $tag "portable\Subtitle-Searcher.exe" --target "${{ github.sha }}" --title "Subtitle Searcher - Windows" --notes "Portable Windows executable built automatically by GitHub Actions."
+          }
