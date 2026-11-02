@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::Serialize;
@@ -595,7 +597,17 @@ fn safe_collection_path(root: &Path, name: &str) -> Option<PathBuf> {
 }
 
 #[tauri::command]
-fn search_subtitles(
+async fn search_subtitles(
+    collection: Option<String>,
+    query: String,
+    limit: Option<usize>,
+) -> Result<Vec<SearchResult>, String> {
+    tauri::async_runtime::spawn_blocking(move || search_subtitles_blocking(collection, query, limit))
+        .await
+        .map_err(|error| format!("Search worker failed: {error}"))?
+}
+
+fn search_subtitles_blocking(
     collection: Option<String>,
     query: String,
     limit: Option<usize>,
