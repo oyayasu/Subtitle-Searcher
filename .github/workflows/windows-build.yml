@@ -24,12 +24,15 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Generate Windows icon required by Tauri
-        shell: pwsh
+      - name: Setup Python for icon generation
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate branded Windows icon
         run: |
-          New-Item -ItemType Directory -Force -Path src-tauri\icons | Out-Null
-          $iconBase64 = "AAABAAEAICAAAAAAIABqAAAAFgAAAIlQTkcNChoKAAAADUlIRFIAAAAgAAAAIAgGAAAAc3p69AAAADFJREFUeJztzjEBADAMw7CsVMIf4wqjj0zAem1/DpvLOQAAAAAAAAAAAAAAAAAAQJIsvboBqNkZYrMAAAAASUVORK5CYII="
-          [IO.File]::WriteAllBytes("src-tauri\icons\icon.ico", [Convert]::FromBase64String($iconBase64))
+          python -m pip install --disable-pip-version-check Pillow
+          python scripts/generate_icon.py
 
       - name: Install dependencies
         run: npm install
