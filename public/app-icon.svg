@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Subtitle Searcher</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#275c64"/>
+      <stop offset=".65" stop-color="#16333e"/>
+      <stop offset="1" stop-color="#102731"/>
+    </linearGradient>
+    <linearGradient id="bubble" x1="0" y1="0" x2=".9" y2="1">
+      <stop stop-color="#f6fffc"/>
+      <stop offset="1" stop-color="#d9f3e9"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#92ead0"/>
+      <stop offset="1" stop-color="#46bdab"/>
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#031b22" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <circle cx="464" cy="30" r="245" fill="#70c8ac" opacity=".06"/>
+  <rect x="93" y="115" width="326" height="238" rx="52" fill="url(#bubble)" filter="url(#shadow)"/>
+  <path d="M157 351v41l58-42" fill="#e1f6ed"/>
+  <rect x="147" y="169" width="211" height="21" rx="10.5" fill="#537d7d" opacity=".55"/>
+  <rect x="147" y="220" width="145" height="20" rx="10" fill="#537d7d" opacity=".35"/>
+  <circle cx="324" cy="319" r="85" fill="#1b454e" stroke="url(#glass)" stroke-width="23"/>
+  <circle cx="324" cy="319" r="56" fill="#245763" opacity=".75"/>
+  <path d="M386 381l59 59" stroke="#6dd7be" stroke-width="30" stroke-linecap="round"/>
+  <path d="M295 304c7-17 21-27 38-29" fill="none" stroke="#b9fff0" stroke-opacity=".7" stroke-width="10" stroke-linecap="round"/>
+</svg>
