@@ -24,12 +24,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Install frontend dependencies
         run: npm install
+
+      - name: Setup Python for test icon
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate test icon
+        run: |
+          python -m pip install --disable-pip-version-check Pillow
+          python scripts/generate_icon.py
 
       - name: Build frontend
         run: npm run build
