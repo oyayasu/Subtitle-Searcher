@@ -22,7 +22,6 @@ const app = document.querySelector<HTMLDivElement>("#app")!;
 let library: LibraryItem[] = [];
 let currentCollection: LibraryItem | null = null;
 let libraryRoot = "";
-let searchTimer: number | undefined;
 let searchSequence = 0;
 let scope: "collection" | "all" = "collection";
 
@@ -71,12 +70,12 @@ function renderLibrary() {
     .map(
       (item, index) => `
         <button class="library-card" data-index="${index}">
-          <span class="library-monogram">${escapeHtml(collectionIcon(item.name))}</span>
+          <span class="library-monogram"><span class="monogram-mark">${escapeHtml(collectionIcon(item.name))}</span><span class="poster-corner"></span></span>
           <span class="library-card-copy">
             <strong>${escapeHtml(item.name)}</strong>
-            <span>${item.fileCount} ${item.fileCount === 1 ? "subtitle" : "subtitles"}</span>
+            <span><span class="mini-dot"></span>${item.fileCount} ${item.fileCount === 1 ? "subtitle file" : "subtitle files"}</span>
           </span>
-          <span class="chevron" aria-hidden="true">›</span>
+          <span class="chevron" aria-hidden="true">↗</span>
         </button>
       `,
     )
@@ -85,19 +84,38 @@ function renderLibrary() {
   app.innerHTML = `
     <main class="shell">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">LOCAL LIBRARY</p>
-          <h1>Subtitle Searcher</h1>
+        <div class="brand-heading">
+          <img class="app-brand-icon" src="/app-icon.svg" alt="" />
+          <div>
+            <p class="eyebrow">YOUR PERSONAL DIALOGUE LIBRARY</p>
+            <h1>Subtitle Searcher</h1>
+          </div>
         </div>
         <button class="icon-button" id="refresh-library" title="Rescan library" aria-label="Rescan library">
           ↻
         </button>
       </header>
 
+      <section class="library-hero">
+        <div class="hero-copy">
+          <span class="hero-tag"><span class="status-dot"></span> THE LANGUAGE OF STORIES</span>
+          <h2>Find the right words.<br/><em>In the right moment.</em></h2>
+          <p>Search real dialogue from the films and shows you love. Explore expressions, discover variations, and learn how people actually speak.</p>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="art-caption">CAPTURED DIALOGUE</div>
+          <div class="art-line active"><span>“</span> I can <b>figure it out.</b></div>
+          <div class="art-line muted">What are you talking about?</div>
+          <div class="art-line">I've got <b>something to say.</b></div>
+          <div class="art-timeline"><span></span><i></i></div>
+          <div class="art-foot">00:14:08 <span>•</span> S01 E04</div>
+        </div>
+      </section>
+
       <section class="library-heading">
         <div>
-          <h2>Your library</h2>
-          <p>Choose a show or movie to search its dialogue.</p>
+          <h2>Your collections</h2>
+          <p>Select a show or film to explore its dialogue.</p>
         </div>
         <span class="library-count">${library.length}</span>
       </section>
@@ -141,7 +159,7 @@ function openCollection(item: LibraryItem) {
   app.innerHTML = `
     <main class="shell search-shell">
       <header class="search-header">
-        <button class="back-button" id="back-library">‹ <span>Library</span></button>
+        <button class="back-button" id="back-library"><span class="back-arrow">←</span> <span>Library</span></button>
         <div class="search-title">
           <span class="small-monogram">${escapeHtml(collectionIcon(item.name))}</span>
           <div>
@@ -153,17 +171,24 @@ function openCollection(item: LibraryItem) {
       </header>
 
       <section class="search-panel">
-        <label class="search-box">
-          <span class="search-symbol">⌕</span>
+        <div class="search-intro">
+          <span class="section-kicker">DIALOGUE EXPLORER</span>
+          <h2>What are you looking for?</h2>
+          <p>Words, natural sentences, or expressions — even if they don't match exactly.</p>
+        </div>
+        <div class="search-box">
+          <span class="search-symbol" aria-hidden="true">⌕</span>
           <input
             id="search-input"
+            aria-label="Search subtitle dialogue"
             type="search"
             autocomplete="off"
             spellcheck="false"
             placeholder="Search a word, expression, or natural sentence…"
           />
-          <kbd>Enter</kbd>
-        </label>
+          <button type="button" class="run-search" id="run-search">Search <span aria-hidden="true">↗</span></button>
+        </div>
+        <p class="search-tip">Press <kbd>Enter</kbd> or click Search when you're ready. Results are sorted by similarity, not just exact wording.</p>
 
         <div class="scope-row">
           <span>Search in</span>
@@ -178,7 +203,7 @@ function openCollection(item: LibraryItem) {
         <div class="search-placeholder">
           <div class="placeholder-mark">“ ”</div>
           <h2>Search the dialogue</h2>
-          <p>Exact matches come first, but the search also understands common inflections, reordered expressions, synonyms, and fuzzy wording.</p>
+          <p>Try <strong>take the trash out</strong>, <strong>counter</strong>, or any natural sentence. Exact and approximate matches appear together.</p>
         </div>
       </section>
     </main>
@@ -193,12 +218,19 @@ function openCollection(item: LibraryItem) {
 
   const input = document.querySelector<HTMLInputElement>("#search-input")!;
   input.focus();
-  input.addEventListener("input", () => scheduleSearch(input.value));
+  input.addEventListener("input", () => {
+    searchSequence++;
+    renderSearchPlaceholder(input.value.trim().length > 0);
+  });
   input.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
-      window.clearTimeout(searchTimer);
+      event.preventDefault();
       void performSearch(input.value);
     }
+  });
+
+  document.querySelector<HTMLButtonElement>("#run-search")?.addEventListener("click", () => {
+    void performSearch(input.value);
   });
 
   document.querySelectorAll<HTMLButtonElement>(".segment").forEach((button) => {
@@ -206,34 +238,31 @@ function openCollection(item: LibraryItem) {
       scope = button.dataset.scope === "all" ? "all" : "collection";
       document.querySelectorAll(".segment").forEach((segment) => segment.classList.remove("active"));
       button.classList.add("active");
-      void performSearch(input.value);
+      searchSequence++;
+      renderSearchPlaceholder(input.value.trim().length > 0);
     });
   });
 }
 
-function scheduleSearch(query: string) {
-  window.clearTimeout(searchTimer);
-  if (!query.trim()) {
-    renderSearchPlaceholder();
-    return;
-  }
-
-  searchTimer = window.setTimeout(() => {
-    void performSearch(query);
-  }, 180);
-}
-
-function renderSearchPlaceholder() {
+function renderSearchPlaceholder(hasQuery = false) {
   const area = document.querySelector<HTMLDivElement>("#results-area");
   if (!area) return;
 
-  area.innerHTML = `
-    <div class="search-placeholder">
-      <div class="placeholder-mark">“ ”</div>
-      <h2>Search the dialogue</h2>
-      <p>Try a word like <strong>counter</strong> or a phrase like <strong>take the trash out</strong>.</p>
-    </div>
-  `;
+  area.innerHTML = hasQuery
+    ? `
+      <div class="search-placeholder ready-placeholder">
+        <div class="placeholder-mark">↵</div>
+        <h2>Ready when you are</h2>
+        <p>Press <strong>Enter</strong> or click <strong>Search</strong> to look through your subtitles.</p>
+      </div>
+    `
+    : `
+      <div class="search-placeholder">
+        <div class="placeholder-mark">⌕</div>
+        <h2>Discover dialogue in context</h2>
+        <p>Try a word like <strong>counter</strong> or an expression like <strong>take the trash out</strong>.</p>
+      </div>
+    `;
 }
 
 async function performSearch(query: string) {
@@ -321,7 +350,7 @@ function renderResults(results: SearchResult[], query: string) {
   area.innerHTML = `
     <div class="results-heading">
       <span><strong>${results.length}</strong> ${results.length === 1 ? "result" : "results"}</span>
-      <span>Closest matches first</span>
+      <span>BEST MATCHES FIRST</span>
     </div>
     <div class="results-list">${cards}</div>
   `;
