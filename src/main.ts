@@ -63,6 +63,7 @@ const collectionIcon = (name: string) => {
 };
 
 function renderLibrary() {
+  searchSequence++;
   currentCollection = null;
   document.title = "Subtitle Searcher";
 
@@ -152,6 +153,7 @@ function renderLibrary() {
 }
 
 function openCollection(item: LibraryItem) {
+  searchSequence++;
   currentCollection = item;
   scope = "collection";
   document.title = `${item.name} — Subtitle Searcher`;
@@ -201,8 +203,8 @@ function openCollection(item: LibraryItem) {
 
       <section id="results-area" class="results-area">
         <div class="search-placeholder">
-          <div class="placeholder-mark">“ ”</div>
-          <h2>Search the dialogue</h2>
+          <div class="placeholder-mark">⌕</div>
+          <h2>Discover dialogue in context</h2>
           <p>Try <strong>take the trash out</strong>, <strong>counter</strong>, or any natural sentence. Exact and approximate matches appear together.</p>
         </div>
       </section>
